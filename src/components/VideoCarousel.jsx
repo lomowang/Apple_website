@@ -1,33 +1,40 @@
 import React, { useEffect, useRef, useState } from "react";
-import { hightlightsSlides } from "../constants";
-import { pauseImg, playImg, replayImg } from "../utils";
-import gsap from "gsap";
-import { useGSAP } from "@gsap/react";
+import { hightlightsSlides } from "../constants"; // 從 constants 文件導入高亮幻燈片數據
+import { pauseImg, playImg, replayImg } from "../utils"; // 從 utils 文件導入控制按鈕圖片
+import gsap from "gsap"; // 導入 GSAP 動畫庫
+import { useGSAP } from "@gsap/react"; // 導入 GSAP 的 React 鉤子
 
 const VideoCarousel = () => {
+  // 使用 useRef 創建對視頻元素的引用
   const videoRef = useRef([]);
   const videoSpanRef = useRef([]);
   const videoDivRef = useRef([]);
 
+  // 定義視頻播放相關的狀態
   const [video, setVideo] = useState({
-    isEnd: false,
-    startPlay: false,
-    videoId: 0,
-    isLastVideo: false,
-    isPlaying: false,
+    isEnd: false, // 是否結束
+    startPlay: false, // 是否開始播放
+    videoId: 0, // 當前播放的視頻 ID
+    isLastVideo: false, // 是否為最後一個視頻
+    isPlaying: false, // 是否正在播放
   });
 
+  // 已加載數據的狀態
   const [loadedData, setLoadedData] = useState([]);
 
+  // 解構狀態變量
   const { isEnd, startPlay, videoId, isLastVideo, isPlaying } = video;
 
+  // 使用自定義的 useGSAP 鉤子來處理動畫
   useGSAP(() => {
+    // 滑動動畫
     gsap.to("#slider", {
       transform: `translateX(${-100 * videoId}%)`,
       duration: 2,
       ease: "power2.inOut",
     });
 
+    // 完成動畫時的處理
     gsap.to("#video", {
       scrollTrigger: {
         trigger: "video",
@@ -43,6 +50,7 @@ const VideoCarousel = () => {
     });
   }, [isEnd, videoId]);
 
+  // 處理視頻播放和暫停的效果
   useEffect(() => {
     if (loadedData.length > 3) {
       if (!isPlaying) {
@@ -53,8 +61,10 @@ const VideoCarousel = () => {
     }
   }, [startPlay, videoId, isPlaying, loadedData]);
 
+  // 處理視頻加載元數據
   const handleLoadedMetadata = (i, e) => setLoadedData((pre) => [...pre, e]);
 
+  // 視頻播放進度動畫
   useEffect(() => {
     let currentProgress = 0;
     let span = videoSpanRef.current;
@@ -107,6 +117,7 @@ const VideoCarousel = () => {
     }
   }, [videoId, startPlay]);
 
+  // 處理視頻播放過程中的各種事件
   const handleProcess = (type, i) => {
     switch (type) {
       case "video-end":
@@ -143,7 +154,6 @@ const VideoCarousel = () => {
                   muted
                   className={`${list.id === 2 && "translate-x-44"}
                   pointer-events-none
-                  
                   }`}
                   ref={(el) => (videoRef.current[i] = el)}
                   onEnded={() =>
@@ -189,9 +199,22 @@ const VideoCarousel = () => {
           ))}
         </div>
         <button className="control-btn">
+          {/* 图片元素用于显示控制按钮，具体显示哪个按钮由视频的播放状态决定 */}
           <img
+            // 图片源地址（src）根据视频是否为最后一个视频以及是否正在播放来决定：
+            // - 如果是最后一个视频（isLastVideo为true），则显示重播图标（replayImg）
+            // - 如果不是最后一个视频但视频处于暂停状态（isPlaying为false），则显示播放图标（playImg）
+            // - 否则，显示暂停图标（pauseImg）
             src={isLastVideo ? replayImg : !isPlaying ? playImg : pauseImg}
+            // 图片的替代文本（alt），也根据视频状态来决定，与图片源逻辑相同：
+            // - 对于重播图标，替代文本为"replay"
+            // - 对于播放图标，替代文本为"play"
+            // - 对于暂停图标，替代文本为"pause"
             alt={isLastVideo ? "replay" : !isPlaying ? "play" : "pause"}
+            // 点击事件处理器：
+            // - 如果是最后一个视频，点击后调用 handleProcess 函数处理视频重置（video-reset）
+            // - 如果不是最后一个视频且视频正在播放（isPlaying为true），点击后调用 handleProcess 处理暂停（pause）
+            // - 如果视频不在播放（isPlaying为false），点击后调用 handleProcess 处理播放（play）
             onClick={
               isLastVideo
                 ? () => handleProcess("video-reset")
